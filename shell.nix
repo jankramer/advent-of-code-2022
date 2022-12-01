@@ -9,5 +9,5 @@ let
 in with pkgs;
 pkgs.mkShell {
 
-  buildInputs = [ niv nixfmt rust-toolchain ];
+  buildInputs = [ cargo-watch niv nixfmt rust-toolchain ];
 }
