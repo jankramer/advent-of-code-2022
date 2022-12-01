@@ -13,10 +13,7 @@ pub fn run(input: &str) -> (i32, i32) {
         .rev()
         .collect();
 
-    return (
-        elves.first().cloned().unwrap(),
-        elves[0..3].iter().sum::<i32>(),
-    );
+    (elves[0], elves[0..3].iter().sum())
 }
 
 #[cfg(test)]
