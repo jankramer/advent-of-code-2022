@@ -1,84 +1,36 @@
 pub fn run(input: &str) -> (i32, i32) {
-    let a = input
-        .lines()
-        .map(|l| l.split(" ").collect())
-        .map(|l: Vec<&str>| round_a(l[0], l[1]))
-        .sum::<i32>();
-
-    let b = input
-        .lines()
-        .map(|l| l.split(" ").collect())
-        .map(|l: Vec<&str>| round_b(l[0], l[1]))
-        .sum::<i32>();
-
-    (a, b)
+    (
+        input.lines().map(part_a).sum::<i32>(),
+        input.lines().map(part_b).sum::<i32>(),
+    )
 }
 
-fn round_a(a: &str, b: &str) -> i32 {
-    let shape_score = match b {
-        "X" => 1,
-        "Y" => 2,
-        "Z" => 3,
+fn part_a(line: &str) -> i32 {
+    match line {
+        "A X" => 4,
+        "A Y" => 8,
+        "A Z" => 3,
+        "B X" => 1,
+        "B Y" => 5,
+        "B Z" => 9,
+        "C X" => 7,
+        "C Y" => 2,
+        "C Z" => 6,
         _ => 0,
-    };
-
-    let match_score = match a {
-        "A" => match b {
-            "X" => 3,
-            "Y" => 6,
-            "Z" => 0,
-            _ => 0,
-        },
-        "B" => match b {
-            "X" => 0,
-            "Y" => 3,
-            "Z" => 6,
-            _ => 0,
-        },
-        "C" => match b {
-            "X" => 6,
-            "Y" => 0,
-            "Z" => 3,
-            _ => 0,
-        },
-        _ => 0,
-    };
-
-    shape_score + match_score
+    }
 }
 
-fn round_b(a: &str, b: &str) -> i32 {
-    match a {
-        // Rock
-        "A" => match b {
-            // Lose -> Scissor
-            "X" => 3 + 0,
-            // Draw -> Rock
-            "Y" => 1 + 3,
-            // Win -> Paper
-            "Z" => 2 + 6,
-            _ => 0,
-        },
-        // Paper
-        "B" => match b {
-            // Lose -> Rock
-            "X" => 1 + 0,
-            // Draw -> Paper
-            "Y" => 2 + 3,
-            // Win -> Scissor
-            "Z" => 3 + 6,
-            _ => 0,
-        },
-        // Scissor
-        "C" => match b {
-            // Lose -> Paper
-            "X" => 2 + 0,
-            // Draw -> Scissor
-            "Y" => 3 + 3,
-            // Win -> Rock
-            "Z" => 1 + 6,
-            _ => 0,
-        },
+fn part_b(line: &str) -> i32 {
+    match line {
+        "A X" => 3,
+        "A Y" => 4,
+        "A Z" => 8,
+        "B X" => 1,
+        "B Y" => 5,
+        "B Z" => 9,
+        "C X" => 2,
+        "C Y" => 6,
+        "C Z" => 7,
         _ => 0,
     }
 }
