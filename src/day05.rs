@@ -1,97 +1,82 @@
 use itertools::Itertools;
+use parse_display::{Display, FromStr};
 
-#[derive(PartialEq, Debug, Clone)]
+pub fn run(input: &str) -> (String, String) {
+    let (stacks, moves) = input.split_once("\n\n").unwrap();
+    let moves: Vec<Move> = moves.lines().filter_map(|l| l.parse().ok()).collect();
+    let stacks: Vec<Vec<char>> = parse_stacks(stacks);
+
+    (
+        answer(stacks.clone(), &moves, true),
+        answer(stacks, &moves, false),
+    )
+}
+
+fn answer(stacks: Vec<Vec<char>>, moves: &[Move], reverse: bool) -> String {
+    moves
+        .iter()
+        .fold(stacks, |stacks, m| m.apply(stacks, reverse))
+        .iter()
+        .filter_map(|v| v.last())
+        .join("")
+}
+
+fn parse_stacks(input: &str) -> Vec<Vec<char>> {
+    input
+        .lines()
+        .rev()
+        .skip(1)
+        .map(|l| l.chars().skip(1).step_by(4).collect())
+        .collect::<Vec<Vec<char>>>()
+        .transpose()
+        .iter()
+        .map(|row| {
+            row.iter()
+                .filter_map(|&f| match f {
+                    ' ' => None,
+                    _ => Some(f),
+                })
+                .collect()
+        })
+        .collect()
+}
+
+trait Matrix<T> {
+    fn transpose(&self) -> Vec<Vec<T>>;
+}
+
+impl<T> Matrix<T> for Vec<Vec<T>>
+where
+    T: Copy,
+{
+    fn transpose(&self) -> Vec<Vec<T>> {
+        (0..self[0].len())
+            .map(|col| self.iter().map(|row| row[col]).collect())
+            .collect()
+    }
+}
+
+#[derive(Display, FromStr)]
+#[display("move {qty} from {from} to {to}")]
 struct Move {
-    quantity: usize,
+    qty: usize,
     from: usize,
     to: usize,
 }
 
-#[derive(PartialEq, Debug, Clone)]
-struct State {
-    stacks: Vec<Vec<char>>,
-}
+impl Move {
+    fn apply(&self, mut stacks: Vec<Vec<char>>, reverse: bool) -> Vec<Vec<char>> {
+        let lift_from = stacks[self.from - 1].len() - self.qty;
+        let mut lift_items: Vec<char> = stacks[self.from - 1].drain(lift_from..).collect();
 
-pub fn run(input: &str) -> (String, String) {
-    let (state, moves) = parse(input);
-
-    (part_a(state.clone(), moves.clone()), part_b(state, moves))
-}
-
-fn part_a(mut state: State, moves: Vec<Move>) -> String {
-    for m in moves {
-        for _i in 1..=m.quantity {
-            let from = state.stacks[m.from - 1].pop();
-            state.stacks[m.to - 1].push(from.unwrap());
-        }
-    }
-
-    state
-        .stacks
-        .iter()
-        .map(|s| s.last().unwrap().to_string())
-        .join("")
-}
-
-fn part_b(mut state: State, moves: Vec<Move>) -> String {
-    for m in moves {
-        let mut temp_stack = vec![];
-        for _i in 1..=m.quantity {
-            let from = state.stacks[m.from - 1].pop();
-            temp_stack.push(from.unwrap());
+        if reverse {
+            lift_items.reverse();
         }
 
-        for _i in 1..=m.quantity {
-            state.stacks[m.to - 1].push(temp_stack.pop().unwrap());
-        }
+        stacks[self.to - 1].extend(lift_items);
+
+        stacks
     }
-
-    state
-        .stacks
-        .iter()
-        .map(|s| s.last().unwrap().to_string())
-        .join("")
-}
-
-fn parse(input: &str) -> (State, Vec<Move>) {
-    let (state, moves) = input.split_once("\n\n").unwrap();
-
-    (parse_state(state), moves.lines().map(parse_move).collect())
-}
-
-fn parse_state(state: &str) -> State {
-    State {
-        stacks: transpose(state.lines().map(|l| l.chars().collect()).collect())
-            .into_iter()
-            .filter(|stack| stack[0] != ' ')
-            .map(|stack| stack.into_iter().filter(|&c| c != ' ').skip(1).collect())
-            .collect(),
-    }
-}
-
-fn parse_move(line: &str) -> Move {
-    let parts: Vec<&str> = line.split_whitespace().collect();
-
-    Move {
-        quantity: parts[1].parse().unwrap(),
-        from: parts[3].parse().unwrap(),
-        to: parts[5].parse().unwrap(),
-    }
-}
-
-fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>>
-where
-    T: Clone,
-{
-    assert!(!v.is_empty());
-    (0..v[0].len())
-        .map(|i| {
-            v.iter()
-                .map(|inner| inner[i].clone())
-                .rev()
-                .collect::<Vec<T>>()
-        })
-        .collect()
 }
 
 #[cfg(test)]
@@ -101,40 +86,6 @@ mod tests {
     #[test]
     fn example() {
         assert_eq!(run(INPUT), ("CMZ".to_string(), "MCD".to_string()));
-    }
-
-    #[test]
-    fn test_parse() {
-        assert_eq!(
-            parse(INPUT),
-            (
-                State {
-                    stacks: vec![vec!['Z', 'N'], vec!['M', 'C', 'D'], vec!['P'],]
-                },
-                vec![
-                    Move {
-                        quantity: 1,
-                        from: 2,
-                        to: 1
-                    },
-                    Move {
-                        quantity: 3,
-                        from: 1,
-                        to: 3
-                    },
-                    Move {
-                        quantity: 2,
-                        from: 2,
-                        to: 1
-                    },
-                    Move {
-                        quantity: 1,
-                        from: 1,
-                        to: 2
-                    },
-                ]
-            )
-        );
     }
 
     const INPUT: &'static str = "    [D]    
