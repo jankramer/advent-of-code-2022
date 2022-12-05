@@ -1,3 +1,14 @@
+const INPUT: &str = include_str!("input.txt");
+const INPUT_TEST: &str = include_str!("input.test.txt");
+
+fn main() {
+    assert_eq!(run(INPUT_TEST), (15, 12));
+    let (a, b) = run(INPUT);
+
+    println!("Part A: {}", a);
+    println!("Part B: {}", b);
+}
+
 pub fn run(input: &str) -> (i32, i32) {
     (
         input.lines().map(part_a).sum::<i32>(),
@@ -33,18 +44,4 @@ fn part_b(line: &str) -> i32 {
         "C Z" => 7,
         _ => 0,
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn example() {
-        assert_eq!(run(INPUT), (15, 12));
-    }
-
-    const INPUT: &'static str = "A Y
-B X
-C Z";
 }

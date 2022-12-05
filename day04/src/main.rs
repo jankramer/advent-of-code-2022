@@ -1,3 +1,14 @@
+const INPUT: &str = include_str!("input.txt");
+const INPUT_TEST: &str = include_str!("input.test.txt");
+
+fn main() {
+    assert_eq!(run(INPUT_TEST), (2, 4));
+    let (a, b) = run(INPUT);
+
+    println!("Part A: {}", a);
+    println!("Part B: {}", b);
+}
+
 type Pair = (Range, Range);
 type Range = (usize, usize);
 
@@ -31,26 +42,4 @@ fn parse_pair(pair: &str) -> Range {
     let (left, right) = pair.split_once('-').unwrap();
 
     (left.parse().unwrap(), right.parse().unwrap())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse() {
-        assert_eq!(parse("2-3,4-5"), ((2, 3), (4, 5)));
-    }
-
-    #[test]
-    fn example() {
-        assert_eq!(run(INPUT), (2, 4));
-    }
-
-    const INPUT: &'static str = "2-4,6-8
-2-3,4-5
-5-7,7-9
-2-8,3-7
-6-6,4-6
-2-6,4-8";
 }

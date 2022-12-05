@@ -1,10 +1,9 @@
-[package]
-name = "advent-of-code-2022"
-version = "0.1.0"
-edition = "2021"
+[workspace]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-itertools = "0.10.5"
-parse-display = "0.7.0"
+members = [
+    "day01",
+    "day02",
+    "day03",
+    "day04",
+    "day05",
+]

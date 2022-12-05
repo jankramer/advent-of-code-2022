@@ -1,5 +1,16 @@
 use itertools::Itertools;
 
+const INPUT: &str = include_str!("input.txt");
+const INPUT_TEST: &str = include_str!("input.test.txt");
+
+fn main() {
+    assert_eq!(run(INPUT_TEST), (157, 70));
+    let (a, b) = run(INPUT);
+
+    println!("Part A: {}", a);
+    println!("Part B: {}", b);
+}
+
 pub fn run(input: &str) -> (usize, usize) {
     (
         input.lines().map(|l| priority(common_item_a(l))).sum(),
@@ -33,21 +44,4 @@ fn priority(x: char) -> usize {
         97..=122 => char_code - 96,
         _ => 0,
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn example() {
-        assert_eq!(run(INPUT), (157, 70));
-    }
-
-    const INPUT: &'static str = "vJrwpWtwJgWrhcsFMMfFFhFp
-jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
-PmmdzqPrVvPwwTWBwg
-wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
-ttgJtRGJQctTZtZT
-CrZsJsPPZsGzwwsLwLmpwMDw";
 }

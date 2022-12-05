@@ -1,6 +1,17 @@
 use itertools::Itertools;
 use parse_display::{Display, FromStr};
 
+const INPUT: &str = include_str!("input.txt");
+const INPUT_TEST: &str = include_str!("input.test.txt");
+
+fn main() {
+    assert_eq!(run(INPUT_TEST), ("CMZ".to_string(), "MCD".to_string()));
+    let (a, b) = run(INPUT);
+
+    println!("Part A: {}", a);
+    println!("Part B: {}", b);
+}
+
 pub fn run(input: &str) -> (String, String) {
     let (stacks, moves) = input.split_once("\n\n").unwrap();
     let moves: Vec<Move> = moves.lines().filter_map(|l| l.parse().ok()).collect();
@@ -41,21 +52,6 @@ fn parse_stacks(input: &str) -> Vec<Vec<char>> {
         .collect()
 }
 
-trait Matrix<T> {
-    fn transpose(&self) -> Vec<Vec<T>>;
-}
-
-impl<T> Matrix<T> for Vec<Vec<T>>
-where
-    T: Copy,
-{
-    fn transpose(&self) -> Vec<Vec<T>> {
-        (0..self[0].len())
-            .map(|col| self.iter().map(|row| row[col]).collect())
-            .collect()
-    }
-}
-
 #[derive(Display, FromStr)]
 #[display("move {qty} from {from} to {to}")]
 struct Move {
@@ -79,22 +75,17 @@ impl Move {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+trait Matrix<T> {
+    fn transpose(&self) -> Vec<Vec<T>>;
+}
 
-    #[test]
-    fn example() {
-        assert_eq!(run(INPUT), ("CMZ".to_string(), "MCD".to_string()));
+impl<T> Matrix<T> for Vec<Vec<T>>
+where
+    T: Copy,
+{
+    fn transpose(&self) -> Vec<Vec<T>> {
+        (0..self[0].len())
+            .map(|col| self.iter().map(|row| row[col]).collect())
+            .collect()
     }
-
-    const INPUT: &'static str = "    [D]    
-[N] [C]    
-[Z] [M] [P]
- 1   2   3 
-
-move 1 from 2 to 1
-move 3 from 1 to 3
-move 2 from 2 to 1
-move 1 from 1 to 2";
 }
