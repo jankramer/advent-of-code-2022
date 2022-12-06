@@ -37,19 +37,15 @@ fn parse_stacks(input: &str) -> Vec<Vec<char>> {
         .lines()
         .rev()
         .skip(1)
-        .map(|l| l.chars().skip(1).step_by(4).collect())
-        .collect::<Vec<Vec<char>>>()
-        .transpose()
-        .iter()
-        .map(|row| {
-            row.iter()
-                .filter_map(|&f| match f {
-                    ' ' => None,
-                    _ => Some(f),
-                })
+        .map(|l| {
+            l.chars()
+                .skip(1)
+                .step_by(4)
+                .map(|c| if c == ' ' { None } else { Some(c) })
                 .collect()
         })
-        .collect()
+        .collect_vec()
+        .transpose()
 }
 
 #[derive(Display, FromStr)]
@@ -79,13 +75,13 @@ trait Matrix<T> {
     fn transpose(&self) -> Vec<Vec<T>>;
 }
 
-impl<T> Matrix<T> for Vec<Vec<T>>
+impl<T> Matrix<T> for Vec<Vec<Option<T>>>
 where
     T: Copy,
 {
     fn transpose(&self) -> Vec<Vec<T>> {
         (0..self[0].len())
-            .map(|col| self.iter().map(|row| row[col]).collect())
+            .map(|col| self.iter().filter_map(|row| row[col]).collect())
             .collect()
     }
 }
