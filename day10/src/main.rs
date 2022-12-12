@@ -29,7 +29,7 @@ fn solve(input: &str) -> (isize, String) {
             continue;
         }
 
-        let (left, right) = line.split_once(" ").unwrap();
+        let (left, right) = line.split_once(' ').unwrap();
         if left == "addx" {
             write_pixel(register, cycle, &mut output);
             signal_strengths.push(cycle * register);
@@ -48,8 +48,7 @@ fn solve(input: &str) -> (isize, String) {
             .chunks(40)
             .map(|l| l.join(""))
             .collect_vec()
-            .join("\n")
-            .to_string(),
+            .join("\n"),
     )
 }
 
