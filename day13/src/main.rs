@@ -16,24 +16,20 @@ fn main() {
 }
 
 fn solve_a(input: &str) -> usize {
-    let pairs: Vec<Vec<Value>> = input
+    input
         .split("\n\n")
-        .map(|group| {
-            group
-                .lines()
-                .map(|l| serde_json::from_str(l).unwrap())
-                .collect_vec()
+        .enumerate()
+        .map(|(index, group)| {
+            let (left, right) = group.split_once('\n').unwrap();
+            match compare(
+                &serde_json::from_str(left).unwrap(),
+                &serde_json::from_str(right).unwrap(),
+            ) {
+                Ordering::Less => index + 1,
+                _ => 0,
+            }
         })
-        .collect_vec();
-
-    let mut sum_indices = 0;
-    for (i, _) in pairs.iter().enumerate() {
-        if compare(&pairs[i][0].clone(), &pairs[i][1].clone()) != Ordering::Greater {
-            sum_indices += i + 1;
-        }
-    }
-
-    sum_indices
+        .sum()
 }
 
 fn solve_b(input: &str) -> usize {
