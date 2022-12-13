@@ -49,44 +49,33 @@ fn solve_b(input: &str) -> usize {
 }
 
 fn compare(left: &Value, right: &Value) -> Ordering {
-    match left {
-        Array(a) => match right {
-            Array(b) => {
-                for i in 0..max(a.len(), b.len()) {
-                    let result = match a.get(i) {
-                        None => {
-                            if b.get(i).is_some() {
-                                Ordering::Less
-                            } else {
-                                Ordering::Equal
-                            }
+    match (left, right) {
+        (Number(a), Number(b)) => a.as_u64().unwrap().cmp(&b.as_u64().unwrap()),
+        (Array(_), Number(b)) => compare(left, &json![[b]]),
+        (Number(a), Array(_)) => compare(&json![[a]], right),
+        (Array(a), Array(b)) => {
+            for i in 0..max(a.len(), b.len()) {
+                let result = match a.get(i) {
+                    None => {
+                        if b.get(i).is_some() {
+                            Ordering::Less
+                        } else {
+                            Ordering::Equal
                         }
-                        Some(x) => match b.get(i) {
-                            None => Ordering::Greater,
-                            Some(y) => compare(&x.clone(), &y.clone()),
-                        },
-                    };
-
-                    if result != Ordering::Equal {
-                        return result;
                     }
+                    Some(x) => match b.get(i) {
+                        None => Ordering::Greater,
+                        Some(y) => compare(&x.clone(), &y.clone()),
+                    },
+                };
+
+                if result != Ordering::Equal {
+                    return result;
                 }
-
-                Ordering::Equal
             }
-            Number(b) => compare(&Array(a.clone()), &Array(vec![Number(b.clone())])),
-            _ => Ordering::Equal,
-        },
-        Number(a) => match right {
-            Array(b) => compare(&Array(vec![Number(a.clone())]), &Array(b.clone())),
-            Number(b) => {
-                let a_num = a.as_u64().unwrap();
-                let b_num = b.as_u64().unwrap();
 
-                a_num.cmp(&b_num)
-            }
-            _ => Ordering::Equal,
-        },
+            Ordering::Equal
+        }
         _ => Ordering::Equal,
     }
 }
