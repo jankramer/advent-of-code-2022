@@ -1,7 +1,8 @@
+use itertools::EitherOrBoth::{Both, Left, Right};
 use itertools::Itertools;
 use serde_json::Value::{Array, Number};
 use serde_json::{json, Value};
-use std::cmp::{max, Ordering};
+use std::cmp::Ordering;
 
 const INPUT: &str = include_str!("input.txt");
 const INPUT_TEST: &str = include_str!("input.test.txt");
@@ -54,19 +55,11 @@ fn compare(left: &Value, right: &Value) -> Ordering {
         (Array(_), Number(b)) => compare(left, &json![[b]]),
         (Number(a), Array(_)) => compare(&json![[a]], right),
         (Array(a), Array(b)) => {
-            for i in 0..max(a.len(), b.len()) {
-                let result = match a.get(i) {
-                    None => {
-                        if b.get(i).is_some() {
-                            Ordering::Less
-                        } else {
-                            Ordering::Equal
-                        }
-                    }
-                    Some(x) => match b.get(i) {
-                        None => Ordering::Greater,
-                        Some(y) => compare(&x.clone(), &y.clone()),
-                    },
+            for pair in a.iter().zip_longest(b.iter()) {
+                let result = match pair {
+                    Both(l, r) => compare(l, r),
+                    Left(_) => Ordering::Greater,
+                    Right(_) => Ordering::Less,
                 };
 
                 if result != Ordering::Equal {
