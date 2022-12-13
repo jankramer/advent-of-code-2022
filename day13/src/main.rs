@@ -12,37 +12,33 @@ fn main() {
     println!("Part A: {}", solve_a(INPUT));
 
     assert_eq!(solve_b(INPUT_TEST), 140);
-    println!("Part A: {}", solve_b(INPUT));
+    println!("Part B: {}", solve_b(INPUT));
 }
 
 fn solve_a(input: &str) -> usize {
     input
-        .split("\n\n")
+        .lines()
+        .filter_map(|p| p.parse::<Value>().ok())
+        .tuples()
         .enumerate()
-        .map(|(index, group)| {
-            let (left, right) = group.split_once('\n').unwrap();
-            match compare(
-                &serde_json::from_str(left).unwrap(),
-                &serde_json::from_str(right).unwrap(),
-            ) {
-                Ordering::Less => index + 1,
-                _ => 0,
-            }
+        .filter_map(|(pair_index, (left, right))| match compare(&left, &right) {
+            Ordering::Less => Some(pair_index + 1),
+            _ => None,
         })
         .sum()
 }
 
 fn solve_b(input: &str) -> usize {
-    let packets: Vec<Value> = format!("{}\n[[2]]\n[[6]]\n", input)
+    let magic = [json![[[2]]], json![[[6]]]];
+
+    input
         .lines()
         .filter_map(|l| serde_json::from_str::<Value>(l).ok())
+        .chain(magic.clone())
         .sorted_by(compare)
-        .collect_vec();
-
-    let magic_a = packets.iter().position(|p| p == &json![[[2]]]).unwrap();
-    let magic_b = packets.iter().position(|p| p == &json![[[6]]]).unwrap();
-
-    (magic_a + 1) * (magic_b + 1)
+        .positions(|p| magic.contains(&p))
+        .map(|x| x + 1)
+        .product()
 }
 
 fn compare(left: &Value, right: &Value) -> Ordering {
