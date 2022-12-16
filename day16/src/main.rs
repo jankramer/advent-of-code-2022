@@ -10,18 +10,33 @@ const INPUT_TEST: &str = include_str!("input.test.txt");
 
 fn main() {
     assert_eq!(solve(INPUT_TEST), 1651);
-
     println!("Part A: {}", solve(INPUT));
 }
 
+const MAGIC_NUMBER: usize = 300000;
+
 fn solve(input: &str) -> usize {
-    let valves: HashMap<String, Valve> = input
-        .lines()
-        .map(|l| l.parse::<ValveInput>().unwrap().into())
-        .map(|x: Valve| (x.id.clone(), x))
+    let valves_input: Vec<ValveInput> =
+        input.lines().sorted().map(|l| l.parse().unwrap()).collect();
+
+    let valves: Vec<Valve> = valves_input
+        .iter()
+        .enumerate()
+        .map(|(id, v)| Valve {
+            id,
+            label: v.id.clone(),
+            flow_rate: v.flow_rate,
+            leads_to: v
+                .leads_to
+                .split(", ")
+                .map(|x| valves_input.iter().position(|y| y.id == x).unwrap())
+                .collect(),
+        })
         .collect();
 
-    let mut volcanos: Vec<Volcano> = vec![Volcano::new()];
+    let mut volcanos: Vec<Volcano> = Vec::with_capacity(MAGIC_NUMBER);
+    volcanos.push(Volcano::new());
+    let mut queue: BinaryHeap<Volcano> = BinaryHeap::with_capacity(10 * MAGIC_NUMBER);
 
     for i in 1..=30 {
         println!(
@@ -31,15 +46,19 @@ fn solve(input: &str) -> usize {
             volcanos[0].open.iter().join(", ")
         );
 
-        for mut volcano in volcanos.clone() {
-            for new_volcano in volcano.tick(&valves) {
-                volcanos.push(new_volcano);
-            }
+        while let Some(mut volcano) = volcanos.pop() {
+            volcano.tick(&valves, &mut queue);
         }
 
-        volcanos.sort();
-        volcanos.reverse();
-        volcanos.truncate(300000);
+        let mut j = 0;
+        while let Some(volcano) = queue.pop() {
+            volcanos.push(volcano);
+
+            j += 1;
+            if j >= MAGIC_NUMBER {
+                break;
+            }
+        }
     }
 
     volcanos[0].total_pressure
@@ -47,8 +66,8 @@ fn solve(input: &str) -> usize {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct Volcano {
-    open: HashSet<String>,
-    current_valve: String,
+    open: HashSet<usize>,
+    current_valve: usize,
     total_pressure: usize,
     total_flow_rate: usize,
 }
@@ -57,39 +76,35 @@ impl Volcano {
     fn new() -> Self {
         Volcano {
             open: HashSet::new(),
-            current_valve: "AA".to_string(),
+            current_valve: 0,
             total_pressure: 0,
             total_flow_rate: 0,
         }
     }
 
-    fn tick(&mut self, valves: &HashMap<String, Valve>) -> Vec<Volcano> {
-        let current_valve = valves.get(&self.current_valve).unwrap();
+    fn tick(&mut self, valves: &Vec<Valve>, queue: &mut BinaryHeap<Volcano>) {
+        let current_valve = &valves[self.current_valve];
 
         self.total_pressure += self.total_flow_rate;
 
         if self.open.len() == valves.len() {
-            return vec![];
+            return;
         }
-
-        let mut new_volcanos = vec![];
 
         if !self.open.contains(&self.current_valve) {
             let mut new_self_opened = self.clone();
             new_self_opened.open.insert(self.current_valve.clone());
             new_self_opened.total_flow_rate += current_valve.flow_rate;
 
-            new_volcanos.push(new_self_opened);
+            queue.push(new_self_opened);
         }
 
-        for next_valve in current_valve.valves.iter() {
+        for next_valve in current_valve.leads_to.iter() {
             let mut new_with_next_as_current = self.clone();
             new_with_next_as_current.current_valve = next_valve.clone();
 
-            new_volcanos.push(new_with_next_as_current);
+            queue.push(new_with_next_as_current);
         }
-
-        new_volcanos
     }
 }
 impl PartialOrd<Self> for Volcano {
@@ -108,12 +123,13 @@ impl Ord for Volcano {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 struct Valve {
-    id: String,
+    id: usize,
+    label: String,
     flow_rate: usize,
-    valves: Vec<String>,
+    leads_to: Vec<usize>,
 }
 
-#[derive(FromStr, Debug)]
+#[derive(FromStr, Debug, Clone)]
 #[from_str(
     regex = "Valve (?P<id>[A-Z]{2}) has flow rate=(?P<flow_rate>[0-9]+); tunnels? leads? to valves? (?P<leads_to>.+)"
 )]
@@ -121,14 +137,4 @@ struct ValveInput {
     id: String,
     flow_rate: usize,
     leads_to: String,
-}
-
-impl From<ValveInput> for Valve {
-    fn from(x: ValveInput) -> Self {
-        Valve {
-            id: x.id,
-            flow_rate: x.flow_rate,
-            valves: x.leads_to.split(", ").map(|v| v.to_string()).collect_vec(),
-        }
-    }
 }
