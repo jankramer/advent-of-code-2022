@@ -1,9 +1,7 @@
-use std::cmp::Ordering;
-use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
-use std::iter::repeat;
-
 use itertools::Itertools;
-use parse_display::{Display, FromStr};
+use parse_display::FromStr;
+use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashSet};
 
 const INPUT: &str = include_str!("input.txt");
 const INPUT_TEST: &str = include_str!("input.test.txt");
@@ -39,8 +37,14 @@ fn parse(input: &str) -> Vec<Valve> {
 }
 
 fn solve(valves: &Vec<Valve>, minutes_left: usize) -> usize {
+    let open_valves_with_flow = valves
+        .iter()
+        .filter(|v| v.flow_rate > 0)
+        .map(|v| v.id)
+        .collect();
+
     let mut volcanos: Vec<Volcano> = Vec::with_capacity(MAGIC_NUMBER);
-    volcanos.push(Volcano::new(minutes_left));
+    volcanos.push(Volcano::new(open_valves_with_flow, minutes_left));
     let mut queue: BinaryHeap<Volcano> = BinaryHeap::with_capacity(10 * MAGIC_NUMBER);
 
     for i in 1..=30 {
@@ -48,7 +52,7 @@ fn solve(valves: &Vec<Valve>, minutes_left: usize) -> usize {
             "Minute {}, total flow rate {}, valves open {}",
             i,
             volcanos[0].total_flow_rate,
-            volcanos[0].open.iter().join(", ")
+            volcanos[0].open_valves.iter().join(", ")
         );
 
         while let Some(mut volcano) = volcanos.pop() {
@@ -71,7 +75,7 @@ fn solve(valves: &Vec<Valve>, minutes_left: usize) -> usize {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct Volcano {
-    open: HashSet<usize>,
+    open_valves: HashSet<usize>,
     current_valve: usize,
     total_pressure: usize,
     total_flow_rate: usize,
@@ -79,9 +83,9 @@ struct Volcano {
 }
 
 impl Volcano {
-    fn new(minutes_left: usize) -> Self {
+    fn new(open_valves: HashSet<usize>, minutes_left: usize) -> Self {
         Volcano {
-            open: HashSet::new(),
+            open_valves,
             current_valve: 0,
             total_pressure: 0,
             total_flow_rate: 0,
@@ -94,13 +98,13 @@ impl Volcano {
 
         self.total_pressure += self.total_flow_rate;
 
-        if self.open.len() == valves.len() {
+        if self.open_valves.len() == valves.len() {
             return;
         }
 
-        if !self.open.contains(&self.current_valve) {
+        if self.open_valves.contains(&self.current_valve) {
             let mut new_self_opened = self.clone();
-            new_self_opened.open.insert(self.current_valve.clone());
+            new_self_opened.open_valves.remove(&self.current_valve);
             new_self_opened.total_flow_rate += current_valve.flow_rate;
 
             queue.push(new_self_opened);
