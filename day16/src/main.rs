@@ -9,17 +9,20 @@ const INPUT: &str = include_str!("input.txt");
 const INPUT_TEST: &str = include_str!("input.test.txt");
 
 fn main() {
-    assert_eq!(solve(INPUT_TEST, 30), 1651);
-    println!("Part A: {}", solve(INPUT, 30));
+    let test_valves = parse(INPUT_TEST);
+    let real_valves = parse(INPUT);
+
+    assert_eq!(solve(&test_valves, 30), 1651);
+    println!("Part A: {}", solve(&real_valves, 30));
 }
 
 const MAGIC_NUMBER: usize = 300000;
 
-fn solve(input: &str, minutes_left: usize) -> usize {
+fn parse(input: &str) -> Vec<Valve> {
     let valves_input: Vec<ValveInput> =
         input.lines().sorted().map(|l| l.parse().unwrap()).collect();
 
-    let valves: Vec<Valve> = valves_input
+    valves_input
         .iter()
         .enumerate()
         .map(|(id, v)| Valve {
@@ -32,8 +35,10 @@ fn solve(input: &str, minutes_left: usize) -> usize {
                 .map(|x| valves_input.iter().position(|y| y.id == x).unwrap())
                 .collect(),
         })
-        .collect();
+        .collect()
+}
 
+fn solve(valves: &Vec<Valve>, minutes_left: usize) -> usize {
     let mut volcanos: Vec<Volcano> = Vec::with_capacity(MAGIC_NUMBER);
     volcanos.push(Volcano::new(minutes_left));
     let mut queue: BinaryHeap<Volcano> = BinaryHeap::with_capacity(10 * MAGIC_NUMBER);
