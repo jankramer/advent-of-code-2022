@@ -10,11 +10,9 @@ fn main() {
     let test_valves = parse(INPUT_TEST);
     let real_valves = parse(INPUT);
 
-    assert_eq!(solve(&test_valves, 30), 1651);
-    println!("Part A: {}", solve(&real_valves, 30));
+    assert_eq!(solve(&test_valves, 30, 1000), 1651);
+    println!("Part A: {}", solve(&real_valves, 30, 1000));
 }
-
-const MAGIC_NUMBER: usize = 300000;
 
 fn parse(input: &str) -> Vec<Valve> {
     let valves_input: Vec<ValveInput> =
@@ -36,22 +34,24 @@ fn parse(input: &str) -> Vec<Valve> {
         .collect()
 }
 
-fn solve(valves: &Vec<Valve>, minutes_left: usize) -> usize {
+fn solve(valves: &Vec<Valve>, n_minutes: usize, search_space_size: usize) -> usize {
     let open_valves_with_flow = valves
         .iter()
         .filter(|v| v.flow_rate > 0)
         .map(|v| v.id)
         .collect();
 
-    let mut volcanos: Vec<Volcano> = Vec::with_capacity(MAGIC_NUMBER);
-    volcanos.push(Volcano::new(open_valves_with_flow, minutes_left));
-    let mut queue: BinaryHeap<Volcano> = BinaryHeap::with_capacity(10 * MAGIC_NUMBER);
+    let mut volcanos: Vec<Volcano> = Vec::with_capacity(search_space_size);
+    volcanos.push(Volcano::new(open_valves_with_flow, n_minutes));
+    let mut queue: BinaryHeap<Volcano> = BinaryHeap::with_capacity(10 * search_space_size);
+
+    let mut max_value = 0;
 
     for i in 1..=30 {
         println!(
-            "Minute {}, total flow rate {}, valves open {}",
+            "Minute {}, max value {}, valves open: {}",
             i,
-            volcanos[0].total_flow_rate,
+            max_value,
             volcanos[0].open_valves.iter().join(", ")
         );
 
@@ -61,16 +61,25 @@ fn solve(valves: &Vec<Valve>, minutes_left: usize) -> usize {
 
         let mut j = 0;
         while let Some(volcano) = queue.pop() {
+            let current_value = volcano.value();
+            if current_value > max_value {
+                max_value = current_value;
+            }
+
+            if volcano.open_valves.is_empty() {
+                continue;
+            }
+
             volcanos.push(volcano);
 
             j += 1;
-            if j >= MAGIC_NUMBER {
+            if j >= search_space_size {
                 break;
             }
         }
     }
 
-    volcanos[0].total_pressure
+    max_value
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -94,11 +103,12 @@ impl Volcano {
     }
 
     fn tick(&mut self, valves: &Vec<Valve>, queue: &mut BinaryHeap<Volcano>) {
+        self.minutes_left -= 1;
         let current_valve = &valves[self.current_valve];
 
         self.total_pressure += self.total_flow_rate;
 
-        if self.open_valves.len() == valves.len() {
+        if self.open_valves.is_empty() {
             return;
         }
 
