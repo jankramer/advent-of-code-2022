@@ -10,8 +10,8 @@ fn main() {
     let test_valves = parse(INPUT_TEST);
     let real_valves = parse(INPUT);
 
-    assert_eq!(solve(&test_valves, 30, 1000), 1651);
-    println!("Part A: {}", solve(&real_valves, 30, 1000));
+    assert_eq!(solve(&test_valves, 30, 450), 1651);
+    println!("Part A: {}", solve(&real_valves, 30, 450));
 }
 
 fn parse(input: &str) -> Vec<Valve> {
@@ -86,6 +86,7 @@ fn solve(valves: &Vec<Valve>, n_minutes: usize, search_space_size: usize) -> usi
 struct Volcano {
     open_valves: HashSet<usize>,
     current_valve: usize,
+    prev_valve: Option<usize>,
     total_pressure: usize,
     total_flow_rate: usize,
     minutes_left: usize,
@@ -96,6 +97,7 @@ impl Volcano {
         Volcano {
             open_valves,
             current_valve: 0,
+            prev_valve: None,
             total_pressure: 0,
             total_flow_rate: 0,
             minutes_left,
@@ -113,6 +115,7 @@ impl Volcano {
         }
 
         if self.open_valves.contains(&self.current_valve) {
+            self.prev_valve = None;
             let mut new_self_opened = self.clone();
             new_self_opened.open_valves.remove(&self.current_valve);
             new_self_opened.total_flow_rate += current_valve.flow_rate;
@@ -121,6 +124,9 @@ impl Volcano {
         }
 
         for next_valve in current_valve.leads_to.iter() {
+            if self.prev_valve == Some(*next_valve) {
+                continue;
+            }
             let mut new_with_next_as_current = self.clone();
             new_with_next_as_current.current_valve = next_valve.clone();
 
