@@ -1,7 +1,6 @@
-use itertools::Itertools;
 use parse_display::{Display, FromStr};
 use std::collections::BTreeSet;
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Mul};
 
 const INPUT: &str = include_str!("input.txt");
 const INPUT_TEST: &str = include_str!("input.test.txt");
