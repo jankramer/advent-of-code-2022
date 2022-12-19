@@ -1,5 +1,5 @@
 use parse_display::{Display, FromStr};
-use std::collections::BTreeSet;
+use std::collections::HashSet;
 use std::ops::{Add, Mul};
 
 const INPUT: &str = include_str!("input.txt");
@@ -16,13 +16,16 @@ fn main() {
 }
 
 fn solve_a(input: &str) -> usize {
-    let points: BTreeSet<Point> = input.lines().filter_map(|l| l.parse().ok()).collect();
+    let points: HashSet<Point> = input.lines().filter_map(|l| l.parse().ok()).collect();
 
-    points.iter().map(|p| (&p.sides() - &points).len()).sum()
+    points
+        .iter()
+        .map(|p| (&p.sides().into_iter().collect() - &points).len())
+        .sum()
 }
 
 fn solve_b(input: &str) -> usize {
-    let points: BTreeSet<Point> = input.lines().filter_map(|l| l.parse().ok()).collect();
+    let points: HashSet<Point> = input.lines().filter_map(|l| l.parse().ok()).collect();
 
     let min = Point::new(
         points.iter().map(|p| p.x).min().unwrap(),
@@ -36,17 +39,21 @@ fn solve_b(input: &str) -> usize {
         points.iter().map(|p| p.z).max().unwrap(),
     );
 
-    let mut open_sides: BTreeSet<Point> = BTreeSet::new();
+    let mut open_sides: HashSet<Point> = HashSet::new();
     let mut open_sides_count = 0;
     for point in &points {
-        for side in &point.sides() - &points {
+        for side in point.sides() {
+            if points.contains(&side) {
+                continue;
+            }
+
             if open_sides.contains(&side) {
                 open_sides_count += 1;
                 continue;
             }
 
             let mut queue: Vec<Point> = vec![side.clone()];
-            let mut seen: BTreeSet<Point> = BTreeSet::new();
+            let mut seen: HashSet<Point> = HashSet::new();
             seen.insert(point.clone());
 
             while let Some(cube) = queue.pop() {
@@ -82,7 +89,7 @@ fn solve_b(input: &str) -> usize {
     open_sides_count
 }
 
-#[derive(Display, FromStr, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Display, FromStr, Clone, Debug, Hash, Ord, PartialOrd, Eq, PartialEq)]
 #[display("{x},{y},{z}")]
 struct Point {
     x: isize,
@@ -90,22 +97,20 @@ struct Point {
     z: isize,
 }
 
-const DIRECTIONS: &[Point] = &[
-    Point { x: 0, y: 0, z: -1 },
-    Point { x: 0, y: 0, z: 1 },
-    Point { x: 0, y: 1, z: 0 },
-    Point { x: 0, y: -1, z: 0 },
-    Point { x: 1, y: 0, z: 0 },
-    Point { x: -1, y: 0, z: 0 },
-];
-
 impl Point {
     fn new(x: isize, y: isize, z: isize) -> Self {
         Point { x, y, z }
     }
 
-    fn sides(&self) -> BTreeSet<Point> {
-        DIRECTIONS.iter().map(|p| self + p).collect()
+    fn sides(&self) -> [Point; 6] {
+        [
+            self + &Point { x: 0, y: 0, z: -1 },
+            self + &Point { x: 0, y: 0, z: 1 },
+            self + &Point { x: 0, y: 1, z: 0 },
+            self + &Point { x: 0, y: -1, z: 0 },
+            self + &Point { x: 1, y: 0, z: 0 },
+            self + &Point { x: -1, y: 0, z: 0 },
+        ]
     }
 }
 
